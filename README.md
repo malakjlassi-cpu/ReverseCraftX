@@ -1,10 +1,4 @@
 # ReverseCraftX
-From an image to an understanding of how it could be made.
-ReverseCraftX is a long-term personal project focused on visual analysis and design reconstruction.
-The idea is simple:
+Reverse Craft is a long-term personal project born from a very relatable frustration. How many times have we fallen in love with a design on Pinterest, like a dress or a tailored  jacket, only to face complete failure when trying to find it in real shops or asking local artisans to make it, resulting in poor fabric quality and models that never match expectations? Reverse Craft bridges the gap between visual inspiration and concrete realization. From an image to an understanding of how it could be made, the idea is simple: give the system an image of an object, analyze its visible characteristics, understand how it could be designed and manufactured, and help the user reproduce a similar design.
 
-Give the system an image of an object , analyze its visible characteristics ,understand how it could have been designed and manufactured , help the user reproduce a similar design.
-
-The project will initially focus on clothing, before potentially expanding to other everyday objects such as furniture, accessories, or other manufactured products.
-
-The goal is not to simply copy an existing product, but to understand its construction and provide information that can help a user create an original design inspired by it.
+The project is designed for a broad and universal audience ranging from artisans who need help analyzing models and identifying materials to novices who do not know how to make anything with their hands. It welcomes curious minds of all ages, from a little girl wanting to replicate a doll dress design and a young man looking to customize his streetwear style, to a woman searching for her wedding dress or a man preparing his bespoke wedding suit. Initially focusing on clothing for both women and men before potentially expanding to other everyday objects like furniture and accessories, the goal is not to blindly copy an existing product but to understand its construction to help users create an original design inspired by it.
