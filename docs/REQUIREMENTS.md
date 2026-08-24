@@ -35,6 +35,14 @@ Le système doit afficher les informations d'analyse disponibles.
 FR-UC02-05
 Le système doit afficher l'auteur de l'article.
 
+FR-UC05-01 Le système doit permettre à l'utilisateur de soumettre une image (formats acceptés : JPEG, PNG, WEBP ; taille maximale : ex. 10 Mo).
+
+FR-UC05-02 Le système doit déclencher l'analyse de manière asynchrone et afficher un indicateur de chargement (« Analyse en cours... ») à l'utilisateur.
+
+FR-UC05-03 Si l'analyse réussit, le système doit stocker et afficher les résultats en distinguant clairement les observations factuelles des hypothèses.
+
+FR-UC05-04 Si l'analyse échoue (timeout de l'API, image illisible ou non reconnue comme vêtement), le système doit capturer l'erreur, mettre à jour le statut de l'analyse à FAILED, et afficher un message clair à l'utilisateur lui permettant de réessayer avec une autre image.
+
 FR-UC02-06
 Un utilisateur authentifié doit pouvoir commenter l'article.
 
