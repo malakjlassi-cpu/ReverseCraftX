@@ -1,89 +1,56 @@
-UC-01 — Rechercher des designs
-UC-02 — Consulter un article
-UC-03 — Créer un compte / s'authentifier
-UC-04 — Publier un design
-UC-05 — Analyser une image
-UC-06 — Enregistrer un article
-UC-07 — Consulter ses articles enregistrés
-UC-08 — Ajouter un commentaire
-UC-09 — Modifier son profil
+# Use Cases — ReverseCraftX (V1)
+
+This document defines the core Use Cases (UC) for ReverseCraftX, detailing the actors, preconditions, inputs, main flows, and edge cases.
+
+## Summary of Use Cases
+* **UC-01:** Search Designs
+* **UC-02:** View Article
+* **UC-03:** Sign Up / Authenticate
+* **UC-04:** Publish a Design
+* **UC-05:** Analyze an Image
+* **UC-06:** Save an Article
+* **UC-07:** View Saved Articles
+* **UC-08:** Add a Comment
+* **UC-09:** Update User Profile
 
 
-UC-01 — Rechercher des designs
+## Detailed Use Cases
 
-Acteur :
-Visiteur / utilisateur authentifié
-
-But :
-Trouver rapidement des designs publiés dans ReverseCraft.
-
-Précondition :
-Aucune authentification nécessaire.
-
-Input :
-Mot-clé.
-
-Exemple :
-"robe longue"
-"robe satin"
-"robe mariage"
-
-Scénario principal :
-1. L'utilisateur ouvre la recherche.
-2. Il saisit un mot-clé.
-3. Le système recherche les articles publics correspondants.
-4. Le système affiche les résultats.
-5. L'utilisateur sélectionne un article.
-
-Output :
-Liste d'articles correspondant à la recherche.
-
-Cas particulier :
-Aucun résultat → le système informe l'utilisateur qu'aucun article correspondant n'a été trouvé.
+### UC-01 — Search Designs
+* **Actor:** Visitor / Authenticated User
+* **Goal:** Quickly find published designs within ReverseCraftX.
+* **Precondition:** None (No authentication required).
+* **Input:** Search keywords (e.g., *"long dress"*, *"satin dress"*, *"wedding dress"*).
+* **Main Scenario:**
+  1. The user opens the search interface.
+  2. The user enters keywords.
+  3. The system queries public articles matching the input.
+  4. The system displays the matching results.
+  5. The user selects an article.
+* **Output:** A list of matching article previews.
+* **Alternative / Edge Case:** 
+  * *No results:* The system informs the user that no matching designs were found.
 
 
-UC-02 — Consulter un article
 
-Acteur :
-Visiteur / utilisateur authentifié
+### UC-02 — View Article
+* **Actor:** Visitor / Authenticated User
+* **Goal:** View detailed information about a selected article.
+* **Preconditions:** 
+  * The article exists and is public.
+  * The user has accessed it via search or direct navigation.
+* **Input:** Selected article reference.
+* **Main Scenario:**
+  1. The user selects an article from the search results.
+  2. The system opens the article detail page.
+  3. The system renders available details: main image, description, ReverseCraft AI analysis, author info, and comments.
+  4. The user reviews the content.
+* **Post-Actions by Role:**
+  * *Visitor:* Read-only access.
+  * *Authenticated User:* Can add a comment, save the article to favorites, or report the article.
+* **Edge Cases:**
+  * *Article not found / deleted:* The system displays a message indicating the article is no longer available.
+  * *Image load error:* The system displays fallback text while keeping other textual information accessible.
+  * *Loading error:* The system displays an error message with a retry option.
 
-But :
-Consulter les détails d'un article trouvé dans les résultats de recherche.
 
-Préconditions :
-
-L'article existe.
-L'article est public.
-L'utilisateur a accès aux résultats de recherche.
-Aucune authentification n'est nécessaire pour consulter l'article.
-
-Input :
-
-Article sélectionné depuis les résultats de recherche.
-
-Scénario principal :
-
-L'utilisateur effectue une recherche.
-Le système affiche les articles correspondants.
-L'utilisateur sélectionne un article.
-Le système ouvre la page de l'article.
-Le système affiche les détails disponibles :
-image ;
-titre ;
-description ;
-analyse ReverseCraft ;
-auteur ;
-commentaires éventuels.
-L'utilisateur peut consulter le contenu de l'article.
-
-Actions possibles après consultation :
-
-Visiteur : consulter uniquement.
-Utilisateur authentifié : ajouter un commentaire, enregistrer l'article, éventuellement signaler l'article.
-
-Cas particuliers :
-
-Article introuvable → le système affiche un message indiquant que l'article n'existe plus.
-Article supprimé → le système informe l'utilisateur que l'article n'est plus disponible.
-Image indisponible → les autres informations de l'article restent accessibles si possible.
-Erreur de chargement → le système affiche un message et permet de réessayer.
