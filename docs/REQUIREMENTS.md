@@ -1,50 +1,31 @@
-FR-UC01-01 
-Le système doit permettre à tout utilisateur, authentifié ou non, d'effectuer une recherche de designs.
+# Functional Requirements — ReverseCraftX
 
-FR-UC01-02 — Mot-clé
-Le système doit permettre à l'utilisateur de saisir un ou plusieurs mots-clés pour effectuer une recherche.
+This document lists the functional requirements (FR) for ReverseCraftX V1, mapped to each Use Case (UC).
 
-FR-UC01-03 — Résultats
-Le système doit afficher les designs correspondant aux mots-clés saisis par l'utilisateur.
+## UC-01 — Search Designs
+* **FR-UC01-01:** The system must allow any user (authenticated or unauthenticated) to search for designs.
+* **FR-UC01-02:** The system must allow the user to enter one or multiple keywords to execute a search.
+* **FR-UC01-03:** The system must display designs matching the keywords entered by the user.
+* **FR-UC01-04:** Each search result must be presented as a visual card containing at least one preview image.
+* **FR-UC01-05:** Each search result card must be clickable.
+* **FR-UC01-06:** Selecting a search result must open the corresponding article page.
+* **FR-UC01-07:** If no design matches the search keywords, the system must inform the user that no results were found.
 
-FR-UC01-04 — Présentation des résultats
-Chaque résultat doit être présenté sous forme d'un élément visuel contenant au minimum une image permettant d'identifier le design.
+---
 
-FR-UC01-05 — Résultats cliquables
-Chaque résultat de recherche doit être cliquable.
+## UC-02 — View Article & Interactions
+* **FR-UC02-01:** The system must allow any visitor or user to view a public article.
+* **FR-UC02-02:** The system must display the main article image.
+* **FR-UC02-03:** The system must display the article description.
+* **FR-UC02-04:** The system must display the associated AI analysis details.
+* **FR-UC02-05:** The system must display the author of the article.
+* **FR-UC02-06:** An authenticated user must be able to add a comment to the article.
+* **FR-UC02-07:** An authenticated user must be able to report an article.
 
-FR-UC01-06 — Accès à l'article
-Lorsque l'utilisateur sélectionne un résultat, le système doit ouvrir la page correspondant à l'article sélectionné.
+---
 
-FR-UC01-07 — Aucun résultat
-Si aucun design ne correspond aux mots-clés, le système doit informer l'utilisateur qu'aucun résultat n'a été trouvé.
-
-
-FR-UC02-01
-Le système doit permettre à un visiteur de consulter un article public.
-
-FR-UC02-02
-Le système doit afficher l'image de l'article.
-
-FR-UC02-03
-Le système doit afficher sa description.
-
-FR-UC02-04
-Le système doit afficher les informations d'analyse disponibles.
-
-FR-UC02-05
-Le système doit afficher l'auteur de l'article.
-
-FR-UC05-01 Le système doit permettre à l'utilisateur de soumettre une image (formats acceptés : JPEG, PNG, WEBP ; taille maximale : ex. 10 Mo).
-
-FR-UC05-02 Le système doit déclencher l'analyse de manière asynchrone et afficher un indicateur de chargement (« Analyse en cours... ») à l'utilisateur.
-
-FR-UC05-03 Si l'analyse réussit, le système doit stocker et afficher les résultats en distinguant clairement les observations factuelles des hypothèses.
-
-FR-UC05-04 Si l'analyse échoue (timeout de l'API, image illisible ou non reconnue comme vêtement), le système doit capturer l'erreur, mettre à jour le statut de l'analyse à FAILED, et afficher un message clair à l'utilisateur lui permettant de réessayer avec une autre image.
-
-FR-UC02-06
-Un utilisateur authentifié doit pouvoir commenter l'article.
-
-FR-UC02-07
-Un utilisateur authentifié doit pouvoir signaler l'article.
+## UC-05 — Image Analysis
+* **FR-UC05-01:** The system must allow the user to upload an image (accepted formats: JPEG, PNG, WEBP; maximum size: 10 MB).
+* **FR-UC05-02:** The system must trigger the analysis asynchronously and display a loading indicator ("Analysis in progress...") to the user.
+* **FR-UC05-03:** Upon successful analysis, the system must store and display the results while clearly separating factual observations from AI hypotheses.
+* **FR-UC05-04:** If the analysis fails (API timeout, unreadable image, or non-garment image), the system must catch the error, update the analysis status to `FAILED`, and display a clear error message allowing the user to retry with another image.
