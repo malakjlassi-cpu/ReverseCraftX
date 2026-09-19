@@ -1,57 +1,166 @@
-From visual inspiration to physical understanding.
+# ReverseCraftX
 
- Problem
-Finding a specific clothing design seen online (e.g., on Pinterest) in physical stores is notoriously difficult. Working directly with local artisans often leads to miscommunications about proportions, construction, or fabric quality. 
+**Turn an inspiration picture into a clear, honest blueprint of how the garment is made.**
 
- ReverseCraftX  bridges this gap by acting as a visual reverse-engineering assistant for physical designs.
+ReverseCraftX is a visual reverse-engineering assistant for physical designs. Upload a picture of a garment and get a structured analysis (components, probable materials, structure, manufacturing steps) that clearly separates what is **visible** from what is **inferred**.
 
+> **Status:** Early design phase. Documentation first, no runnable code yet.
 
- Vision & Goals
-ReverseCraftX helps users go from a simple image to a clear understanding of how an object is designed and manufactured. 
-
-Universal Audience: Useful for novices who don't know how to sew, artisans looking for model analysis, and creators exploring new ideas.
-Core Principle: The system clearly separates what is visible from what is inferred, avoiding false certainties about materials or measurements derived from a single image.
-
-
- Scope — Version 1 (V1)
-
-V1 establishes the core analysis pipeline focusing on clothing designs.
-
- Input
- An image of a clothing design (JPEG, PNG, WEBP).
- An optional textual description or user context.
-
- Output
-The system generates a structured analysis containing:
-1. **Components:** Visible parts (bodice, sleeves, collar, skirt, waistband, buttons, etc.).
-2. **Probable Materials:** Hypotheses on fabric types (cotton, satin, linen, velvet, etc.).
-3. **Structure:** Hierarchical organization of the components.
-4. **Hypotheses & Uncertainty:** Clear distinction between confirmed observations and AI assumptions.
-5. **Manufacturing Steps:** High-level guide on how a similar design could be produced.
+![ReverseCraftX preview (mockup)](docs/images/preview-placeholder.svg)
 
 
 
- What V1 Will NOT Do
-To maintain a realistic scope, V1 excludes:
-* Exact pattern generation or precise body measurements.
-* Direct product matching or e-commerce purchases.
-* Supplier comparison or price optimization.
+## Table of contents
+
+1. [Live demo](#live-demo)
+2. [How it works](#how-it-works)
+3. [V1 scope](#v1-scope)
+4. [Technologies used](#technologies-used)
+5. [Configuration and customization](#configuration-and-customization)
+6. [Documentation](#documentation)
+7. [Installation](#installation)
+8. [Roadmap](#roadmap)
+9. [License](#license)
+
+## Live demo
+
+Not available yet. A hosted demo link will be added here once V1 is deployed.
 
 
 
- Project Documentation
-The project follows a rigorous engineering methodology:
-* [Project Definition (`project.md`)](./project.md)
-* [Use Cases (`use_case.md`)](./use_case.md)
-* [Requirements (`requirements.md`)](./requirements.md)
-* [Data Model (`data_model.md`)](./data_model.md)
-* [Architecture (`ARCHITECTURE.md`)](./ARCHITECTURE.md)
+## How it works
 
+1. **Sign in.** Only signed-in users can run an analysis (this controls AI costs).
+2. **Upload** an image of a garment (JPEG, PNG or WEBP, up to 10 MB), with an optional text description.
+3. **The backend validates** the file (real type, size), stores it, and creates an analysis with the status `PENDING`. It answers immediately.
+4. **The analysis runs in the background** (`PROCESSING`): an AI model looks at the image and returns structured data.
+5. **The frontend polls** the analysis status every few seconds and shows "Analysis in progress...".
+6. **The result is displayed** (`COMPLETED`), or a clear error with a retry option (`FAILED`).
 
+```mermaid
+sequenceDiagram
+    participant U as User (browser)
+    participant B as Backend (FastAPI)
+    participant S as Image storage
+    participant A as Analysis service
+    participant M as AI model
+    U->>B: Upload image (+ optional description)
+    B->>S: Save validated image
+    B-->>U: 202 Accepted (analysis id, PENDING)
+    B->>A: Start analysis in background
+    A->>M: Send image
+    M-->>A: Structured result
+    U->>B: GET analysis status (polling)
+    B-->>U: PROCESSING
+    A->>B: Save result (COMPLETED or FAILED)
+    U->>B: GET analysis status
+    B-->>U: COMPLETED + result
+```
 
- Tech Stack & Architecture
-*(To be updated as development progresses)*
-* **Frontend:** Web Interface (HTML/CSS/JS or framework)
-* **Backend / API:** REST API handling business logic and asynchronous tasks
-* **Database:** Relational database for users, articles, and analyses
-* **AI / Vision:** Computer Vision & LLM integration for image decomposition
+Status flow: `PENDING` -> `PROCESSING` -> `COMPLETED` or `FAILED`.
+
+### Core principle: visible vs. inferred
+
+The system never presents a guess as a fact. Each item of an analysis separates what is seen from what is assumed, with evidence and a confidence level. Indicative example (final schema defined in the AI decision record):
+
+```json
+{
+  "materials": [
+    {
+      "observed": "glossy surface with soft folds",
+      "hypothesis": "satin or polyester satin",
+      "evidence": "light reflections, fluid drape",
+      "confidence": "medium"
+    }
+  ]
+}
+```
+
+## V1 scope
+
+> *A signed-in user uploads an image of a garment and receives a structured analysis.*
+
+**Included in V1**
+- Sign up and sign in (JWT)
+- Image upload with validation (JPEG, PNG, WEBP, max 10 MB) and optional description
+- Asynchronous analysis with visible status (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`)
+- Structured result: components, probable materials, structure, hypotheses with uncertainty, high-level manufacturing steps
+- Error handling with retry (unreadable image, non-garment image, timeout)
+- Consultation of my own analyses
+
+**Not in V1** (planned later)
+- Publishing designs, search, comments, saved articles, reporting, profile editing
+- Finding or buying the original product, price or supplier comparison
+- Exact measurements from a single image
+- Ready-to-use sewing patterns
+- Domains other than clothing
+
+Full details: [`docs/PROJECT.md`](docs/PROJECT.md).
+
+## Technologies used
+
+| Layer | Technology |
+|---|---|
+| Frontend | HTML5, CSS3, vanilla JavaScript (Fetch API) |
+| Backend | Python, FastAPI (async), Pydantic |
+| Database | MySQL, SQLAlchemy (ORM) |
+| Image storage | Local file system (`storage/images/`) in V1 |
+| AI / analysis | Multimodal AI model called through an API, structured JSON output *(final choice recorded in ADR-001)* |
+| Authentication | JSON Web Tokens (JWT) |
+| Background jobs | FastAPI `BackgroundTasks` in V1 |
+| Testing | `pytest`, API tests |
+| Quality and CI | `ruff`, GitHub Actions |
+| Tooling | Git and GitHub, Python virtual environment (`venv`) |
+
+Rationale for each choice: [`docs/tech_stack.md`](docs/tech_stack.md).
+
+## Configuration and customization
+
+Settings live in a `.env` file (copy `.env.example`, never commit the real `.env`). Names below are indicative and will be finalized with the code.
+
+| Variable | Purpose | Example |
+|---|---|---|
+| `DATABASE_URL` | MySQL connection | `mysql+pymysql://user:pass@localhost/reversecraftx` |
+| `JWT_SECRET` | Token signing key | *(long random string)* |
+| `JWT_EXPIRE_MINUTES` | Token lifetime | `60` |
+| `AI_API_KEY` | Key of the AI provider | *(secret)* |
+| `AI_MODEL` | Model used for analysis | *(defined in ADR-001)* |
+| `ANALYSIS_TIMEOUT_SECONDS` | Max time for one analysis | `60` |
+| `MAX_UPLOAD_MB` | Max image size | `10` |
+| `ANALYSIS_QUOTA_PER_USER` | Analyses allowed per user per day | `10` |
+| `STORAGE_PATH` | Where images are saved | `storage/images/` |
+
+What you can customize:
+- **AI model and provider:** the analysis service sits behind an interface, so the model can be replaced without touching the rest of the backend.
+- **Limits:** upload size, timeout and quotas.
+- **Storage:** local disk in V1, designed to be swapped for a cloud service later.
+- **Language:** English in V1. French and Arabic are candidates for later.
+
+## Documentation
+
+| File | Content | Status |
+|---|---|---|
+| [`docs/PROJECT.md`](docs/PROJECT.md) | Vision, V1 scope, success criteria, risks | Done |
+| [`docs/use_case.md`](docs/use_case.md) | Use cases | Being revised |
+| [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Functional and non-functional requirements | Being revised |
+| `docs/adr/001-ia.md` | Decision record for the AI approach and output schema | To write |
+| [`docs/tech_stack.md`](docs/tech_stack.md) | Technology choices | Being revised |
+| [`docs/architecture.md`](docs/architecture.md) | Components and analysis flow | Being revised |
+| [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) | Database schema | Being revised |
+| `docs/API.md` | Endpoints, errors, status transitions | To write |
+
+## Installation
+
+Coming soon. This section will cover prerequisites (Python, MySQL), virtual environment, dependencies, database migrations, configuration and running the tests (`pytest`).
+
+## Roadmap
+
+- **V1:** authentication, image analysis, consult my analyses
+- **V1.1:** publish a design, search, view an article
+- **V1.2:** comments, saved articles, profile, reporting
+- **V2+:** other domains (accessories, furniture), more languages
+
+## License
+
+To be defined.
+
