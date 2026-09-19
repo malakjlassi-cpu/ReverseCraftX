@@ -6,7 +6,7 @@ ReverseCraftX is a visual reverse-engineering assistant for physical designs. Up
 
 > **Status:** Early design phase. Documentation first, no runnable code yet.
 
-![ReverseCraftX preview (mockup)](docs/images/preview-placeholder.svg)
+![ReverseCraftX preview (mockup)](docs/preview-placeholder.svg)
 
 
 
