@@ -1,6 +1,6 @@
 # Requirements — ReverseCraftX
 
-> **Status:** Draft v2 — aligned with [`PROJECT.md`](PROJECT.md) and [`use_case.md`](use_case.md).
+> **Status:** Draft v3 — aligned with [`PROJECT.md`](PROJECT.md) and [`use_case.md`](use_case.md), including the **100 % free constraint**.
 > **V1 in one sentence:** *A signed-in user uploads an image of a garment and receives a structured analysis that separates what is visible from what is inferred.*
 
 This document lists the functional requirements (FR) and non-functional requirements (NFR) of ReverseCraftX. Every **V1** requirement comes with at least one **acceptance criterion** written as *Given / When / Then*, so that it can become a test.
@@ -54,6 +54,8 @@ This document lists the functional requirements (FR) and non-functional requirem
 | *(new)* | **FR-UC02-01 … 09** **[V1]** | UC-02 is now "View My Analysis Result". |
 | *(new)* | **FR-UC03-01 … 08** **[V1]** | Authentication was missing. |
 | FR-UC05-01 … 04 | Kept, **FR-UC05-02 and 04 corrected**, plus FR-UC05-05 … 21 | Polling made explicit; unreadable images are rejected at upload, not `FAILED`. |
+
+**Draft v3 (100 % free constraint):** new FR-UC05-22 (privacy notice), FR-UC05-23 (global daily cap), FR-UC05-24 (provider capacity errors), NFR-COST-01 and 02; updated FR-UC05-04 (AC3), FR-UC05-10, NFR-LOG-02 and the values in section 5; NFR-SEC-10 (HTTPS) moved to **[V1.1]** because V1 is not deployed.
 
 ---
 
@@ -113,7 +115,7 @@ This document lists the functional requirements (FR) and non-functional requirem
 **FR-UC05-04 [V1] *(corrected)*** If the analysis fails **during processing** (non-garment image, unusable image, AI timeout, AI provider error, invalid AI output, interruption), the system must catch the error, set the status to `FAILED`, store an `error_message`, and display a clear message with the applicable retry option (FR-UC05-19 and FR-UC05-20). The server must keep running and other analyses must be unaffected.
 * **AC1 (non-garment):** **Given** an AI mock reporting that no garment is visible, **when** processing ends, **then** the status is `FAILED`, the message is "No garment was detected in this image.", no result is stored, and the interface offers to try another image. `[API]` `[E2E]`
 * **AC2 (unusable image):** **Given** an AI mock reporting that the garment cannot be analyzed reliably, **when** processing ends, **then** the status is `FAILED`, the message asks for a clearer image, and the interface offers to try another image. `[API]`
-* **AC3 (provider error):** **Given** an AI mock that raises an error, **when** processing runs, **then** the status is `FAILED`, the message says the service is temporarily unavailable, and the interface offers a retry with the same image. `[API]`
+* **AC3 (provider error):** **Given** an AI mock that raises an error, **when** processing runs, **then** the status is `FAILED`, the message says the service is busy or unavailable, and the interface offers a retry with the same image. `[API]`
 
 **FR-UC05-16 [V1]** If the AI does not answer within the time limit *(proposed: 60 seconds)*, the system must set the status to `FAILED` with a timeout message.
 * **AC:** **Given** an AI mock that never answers and a time limit set to 1 second for the test, **when** the analysis runs, **then** the status becomes `FAILED` within 3 seconds with the message "The analysis took too long. Please try again." `[API]`
@@ -149,10 +151,25 @@ This document lists the functional requirements (FR) and non-functional requirem
 **FR-UC05-09 [V1]** The system must limit each user to a maximum number of analyses per day *(proposed: 10, per calendar day in UTC)*.
 * **AC:** **Given** a user who already started 10 analyses today, **when** they submit an 11th, **then** the answer is 429 with a message stating when the quota resets, nothing is stored and no analysis is created; **and** another user is not affected. `[API]` *(with a controllable clock)*
 
-**FR-UC05-10 [V1]** Quota counting must follow these rules: an analysis that ends `FAILED` because of a **system error** (timeout, provider error, interruption) does **not** count; an analysis that ends `COMPLETED`, or `FAILED` because of the **image** (non-garment, unusable), **does** count; a request rejected at upload does **not** count.
+**FR-UC05-10 [V1]** Quota counting must follow these rules: an analysis that ends `FAILED` because of a **system error** (timeout, provider error or provider capacity reached, interruption) does **not** count; an analysis that ends `COMPLETED`, or `FAILED` because of the **image** (non-garment, unusable), **does** count; a request rejected at upload does **not** count.
 * **AC1:** **Given** a quota of 10 with 9 analyses counted, **when** the 10th ends `FAILED` by timeout, **then** the counted usage stays at 9. `[API]`
 * **AC2:** **Given** the same situation, **when** the 10th ends `FAILED` as non-garment, **then** the counted usage becomes 10. `[API]`
 * **AC3:** **Given** a quota of 10 with 9 counted, **when** an upload is rejected for its format, **then** the counted usage stays at 9. `[API]`
+
+#### Free-tier constraints (V1 is 100 % free)
+
+**FR-UC05-22 [V1]** Before a user's first analysis, the interface must display a **privacy notice** stating that the image is sent to a third-party AI service, that on free plans the provider may use submitted content to improve its products, and that users should not upload photos of identifiable people or sensitive images. The user must accept it to continue, and the acceptance must be stored with the account.
+* **AC1:** **Given** a user who has not accepted the notice, **when** they open the analysis page, **then** the notice is displayed and the submit action is disabled until they accept. `[E2E]`
+* **AC2:** **Given** a user who accepted the notice, **when** they open the analysis page again, **then** the notice is not shown again and the submit action is enabled. `[E2E]`
+* **AC3:** **Given** a user who has not accepted the notice, **when** a submission is sent directly to the endpoint, **then** it is refused (403) with a message asking to accept the notice, and nothing is stored. `[API]`
+
+**FR-UC05-23 [V1]** The system must limit the **total number of AI calls per day across all users** to a configured **global daily cap**, set below the provider's documented free daily limit *(proposed: at most 80 % of it)*. Every call sent to the provider counts, including retries and calls that end `FAILED`; uploads rejected before any call do not count.
+* **AC1:** **Given** a global cap of 3 in the test configuration and 3 AI calls already made today by different users, **when** a 4th user submits a valid image, **then** the answer is 503 with the message "The service reached its daily capacity. Please try again tomorrow.", nothing is stored, no analysis is created, and that user's own quota is unchanged. `[API]` *(with a controllable clock)*
+* **AC2:** **Given** a global cap of 3 with 2 calls made, **when** an analysis ends `FAILED` by timeout and the user retries it, **then** both calls are counted (3 in total) and a further submission is refused. `[API]`
+
+**FR-UC05-24 [V1]** When the AI provider answers that its rate limit or its free daily quota is reached, the analysis must end `FAILED` with the message "The analysis service is busy or unavailable. Please try again later.", must offer a retry with the same image, and must not consume the user's quota. The system must **not retry automatically**, so that free capacity is not wasted.
+* **AC1:** **Given** an AI mock that answers with a rate-limit error, **when** the analysis runs, **then** the status is `FAILED` with that message, the applicable retry is with the same image, and the user's counted usage is unchanged. `[API]`
+* **AC2:** **Given** the same mock, **when** the analysis runs, **then** the mock was called exactly once. `[Unit]`
 
 #### Output format and observed / inferred separation
 
@@ -271,7 +288,7 @@ This document lists the functional requirements (FR) and non-functional requirem
 **NFR-SEC-09 [V1]** Database access must use parameterized queries (through the ORM).
 * **AC:** **Given** a sign-in with the email `' OR 1=1 --`, **when** it is submitted, **then** it is treated as an invalid email or unknown account, never as a successful sign-in. `[API]`
 
-**NFR-SEC-10 [V1, at deployment]** In any deployed environment, the application must be served over HTTPS only.
+**NFR-SEC-10 [V1.1, when deployed]** In any deployed environment, the application must be served over HTTPS only. *(V1 runs locally and is not deployed.)*
 * **AC:** **Given** the deployed address, **when** it is requested over plain HTTP, **then** it is redirected to HTTPS. `[Manual]`
 
 ### Compatibility
@@ -305,12 +322,22 @@ This document lists the functional requirements (FR) and non-functional requirem
 **NFR-TEST-02 [V1]** A reference set of about 20 images must exist, each with its expected outcome (garment analyzed, or non-garment/unusable), to evaluate quality.
 * **AC:** **Given** the repository documentation, **when** the reference set is opened, **then** each image has a recorded expected outcome. `[Manual]`
 
-### Observability and cost
+### Cost
+
+**NFR-COST-01 [V1]** V1 must be buildable, testable and runnable at **0 €**: no paid service and no payment card are required at any step.
+* **AC1:** **Given** a clean machine and only the instructions of the `README`, **when** a person installs and runs the application and the automated tests, **then** everything works without entering any payment method. `[Manual]`
+* **AC2:** **Given** the list of tools and services used, **when** each one is checked against its official pricing or license page, **then** each one is open source or used in a free plan. `[Manual]`
+* **AC3:** **Given** the account used for the AI provider, **when** its console is checked, **then** billing is not enabled. `[Manual]`
+
+**NFR-COST-02 [V1]** The global daily cap (FR-UC05-23) must be a required setting: the application must refuse to start without it.
+* **AC:** **Given** the environment without `ANALYSIS_GLOBAL_DAILY_CAP`, **when** the application starts, **then** it stops with an explicit configuration error. `[Unit]`
+
+### Observability and consumption
 
 **NFR-LOG-01 [V1]** Each analysis status change must be logged with the analysis identifier and duration. Logs must never contain passwords, tokens or API keys.
 * **AC:** **Given** an analysis that goes `PENDING` → `PROCESSING` → `COMPLETED`, **when** the logs are read, **then** each change appears with the analysis identifier and duration, and a search for the test password and token finds nothing. `[API]`
 
-**NFR-LOG-02 [V1]** For each analysis, the system must record the AI model version and the processing duration (and usage or cost figures when the provider gives them), to control costs.
+**NFR-LOG-02 [V1]** For each analysis, the system must record the AI model version and the processing duration (and usage figures when the provider gives them), to track consumption against the free-tier limits.
 * **AC:** **Given** a completed analysis, **when** its record is read, **then** it contains the model version and the processing duration. `[API]`
 
 ---
@@ -360,7 +387,7 @@ Acceptance criteria are written when each version starts. Each is subject to the
 Every **[V1]** requirement above has at least one acceptance criterion. Automated test names include the requirement ID. The recommended order to build and test is:
 
 ```text
-FR-UC03 (auth)  ──>  FR-UC05-01/05/06/07/08 (upload)  ──>  FR-UC05-02/03/04/16/17 (async analysis)
+FR-UC03 (auth)  ──>  FR-UC05-01/05/06/07/08/22/23 (upload)  ──>  FR-UC05-02/03/04/16/17/24 (async analysis)
                 ──>  FR-UC05-11…15 (result format)     ──>  FR-UC02 (display)  ──>  FR-UC05-19/20 (retry)
 ```
 
@@ -381,3 +408,7 @@ FR-UC03 (auth)  ──>  FR-UC05-01/05/06/07/08 (upload)  ──>  FR-UC05-02/03
 | Target time | 30 s for 90 % of analyses | NFR-PERF-01 |
 | Extension mismatch | Refuse (strict) | FR-UC05-07 |
 | Duplicate submission of an image being analyzed | Undecided (see `use_case.md`, E15) | — |
+| Global daily cap | At most 80 % of the provider's free daily limit (value set after ADR-001) | FR-UC05-23 |
+| Cap-reached answer | 503 with a "daily capacity" message | FR-UC05-23 |
+| Provider capacity error | `FAILED`, no automatic retry, user quota not consumed | FR-UC05-24 |
+| Privacy notice | Shown before the first analysis, acceptance stored with the account | FR-UC05-22 |
