@@ -1,6 +1,6 @@
 # Use Cases — ReverseCraftX
 
-> **Status:** Draft v2 — aligned with the V1 scope in [`PROJECT.md`](PROJECT.md).
+> **Status:** Draft v3 — aligned with the V1 scope and the **100 % free constraint** in [`PROJECT.md`](PROJECT.md).
 > **V1 in one sentence:** *A signed-in user uploads an image of a garment and receives a structured analysis that separates what is visible from what is inferred.*
 
 This document defines the Use Cases (UC) of ReverseCraftX: actors, preconditions, inputs, main scenarios, error cases and postconditions. Only the **V1** use cases are fully detailed. Later use cases are listed with their target version and will be detailed before they are built.
@@ -17,7 +17,7 @@ Values marked *(proposed)* are starting points to be confirmed in `REQUIREMENTS.
 | **Authenticated User** | Primary | A person signed in with an account. | **Yes**, within the daily quota. |
 | **AI Model / Provider** | Secondary (external system) | The service that performs the visual analysis. It never interacts with users directly. | — |
 
-**Decision — visitors cannot run analyses.** Every analysis has a real cost (AI call) and involves an uploaded file. Requiring an account allows quotas, rate limiting, traceability and abuse control.
+**Decision — visitors cannot run analyses.** Every analysis uses limited AI capacity (V1 relies only on free tiers, budget 0 €) and involves an uploaded file. Requiring an account allows quotas, rate limiting, traceability and abuse control.
 
 ---
 
@@ -77,11 +77,11 @@ A final `FAILED` analysis is **never modified or overwritten**. It stays in the 
 
 | Retry type | Used when | What happens |
 |---|---|---|
-| **Retry with the same image** | The failure is temporary: timeout, provider error, server restart. | A new analysis is created for the **already stored image** and description. No new upload. |
+| **Retry with the same image** | The failure is temporary: timeout, provider error, provider capacity reached, server restart. | A new analysis is created for the **already stored image** and description. No new upload. |
 | **Try another image** | The failure is caused by the image: not a garment, unusable quality. | The user returns to the upload form and submits a new image. |
 
 Rules *(proposed)*:
-* A failed analysis caused by a **system error** (timeout, provider error, restart) does **not** consume the user's daily quota.
+* A failed analysis caused by a **system error** (timeout, provider error or capacity reached, restart) does **not** consume the user's daily quota.
 * A failed analysis caused by the **image itself** does consume quota, because the AI call was made.
 * Maximum **3 retries with the same image**, to avoid endless loops and cost.
 
@@ -148,6 +148,7 @@ Two kinds of errors exist and are handled differently:
 * **Preconditions:**
   * The user is authenticated (valid token).
   * The user has not exceeded the daily analysis quota *(proposed: 10 per day)*.
+  * The application's **global daily capacity** (shared by all users, kept below the AI provider's free limit) is not exhausted.
   * The user has an image file on their device.
 * **Inputs:**
   * **Image:** JPEG, PNG or WEBP, maximum 10 MB.
@@ -157,8 +158,8 @@ Two kinds of errors exist and are handled differently:
 1. The user opens the analysis page.
 2. The user selects an image and optionally types a description.
 3. The interface performs a quick check of format and size and gives immediate feedback.
-4. The user submits the form.
-5. The system authenticates the user and checks the quota.
+4. The user submits the form, after accepting the privacy notice (shown before the first analysis: the image is sent to a third-party AI service, the provider may use submitted content on free plans, no identifiable people or sensitive images).
+5. The system authenticates the user, checks that the privacy notice was accepted, and checks the user quota and the global daily capacity.
 6. The system validates the file on the server: real file type (not just the extension), size, and that the image can be decoded.
 7. The system stores the image under a random file name and removes embedded metadata (such as GPS data).
 8. The system creates an analysis with status `PENDING` and immediately returns its identifier.
@@ -187,6 +188,8 @@ Two kinds of errors exist and are handled differently:
 | E4 | Description too long | Validation message showing the limit. | Shorten the text. |
 | E5 | Daily quota exceeded | Upload refused with the quota message and when it resets. | Wait for reset. |
 | E6 | Not authenticated or token expired | Redirect to sign in (UC-03). | Sign in and resubmit. |
+| E16 | Privacy notice not accepted | Submission refused with a message asking to accept the notice. | Accept the notice. |
+| E17 | **Global daily capacity reached** (all users together) | Upload refused: "The service reached its daily capacity. Please try again tomorrow." No analysis created; the user's quota is unchanged. | Try again tomorrow. |
 
 *B. `FAILED` analysis (detected during processing)*
 
@@ -195,7 +198,7 @@ Two kinds of errors exist and are handled differently:
 | E7 | **Non-garment image** (no clothing detected) | `FAILED` | "No garment was detected in this image." | **Try another image** |
 | E8 | **Unusable image** (too dark, blurry, garment mostly hidden or cropped) | `FAILED` | "The garment could not be analyzed reliably. Try a clearer image." | **Try another image** |
 | E9 | **AI timeout** (no answer within the time limit *(proposed: 60 s)*) | `FAILED` | "The analysis took too long. Please try again." | **Same image** |
-| E10 | AI provider error or unavailable | `FAILED` | "The analysis service is temporarily unavailable." | **Same image** |
+| E10 | AI provider error or unavailable, **or its free-tier limit reached** (rate limit, daily quota) | `FAILED` | "The analysis service is busy or unavailable. Please try again later." | **Same image** |
 | E11 | AI result does not match the expected structure (invalid output) | `FAILED` | "The analysis could not be produced correctly. Please try again." | **Same image** |
 | E12 | Server restarted while the analysis was `PENDING` or `PROCESSING` | `FAILED` (set at startup) | "The analysis was interrupted. Please try again." | **Same image** |
 
@@ -209,6 +212,7 @@ Two kinds of errors exist and are handled differently:
 
 **Business Rules**
 * Only signed-in users can run analyses (see section 1).
+* **V1 is 100 % free:** the application uses only free AI capacity, enforces a global daily cap, never retries a failed AI call automatically, and never enables paid usage.
 * An analysis and its image are **private to their owner** in V1.
 * The system must never present an uncertain interpretation as a fact: every inferred item carries its evidence and a confidence level.
 * Information that cannot be seen (back of the garment, lining, seams) is never reported as observed.
