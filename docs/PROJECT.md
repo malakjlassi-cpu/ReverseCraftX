@@ -1,6 +1,6 @@
 # Project Definition — ReverseCraftX
 
-> **Status:** Draft v2 — V1 scope clarified.
+> **Status:** Draft v3 — V1 scope clarified, **100 % free constraint** added.
 > **V1 in one sentence:** *A signed-in user uploads an image of a garment and receives a structured analysis that separates what is visible from what is inferred.*
 
 ## 1. Problem Statement
@@ -33,7 +33,7 @@ V1 is designed and validated for the **Beginner**: someone with an inspiration i
 V1 focuses exclusively on establishing a **complete analysis pipeline for clothing designs**: upload → analysis → consultable result.
 
 ### Actors
-* **Signed-in user:** the only actor allowed to run an analysis (limits abuse and controls AI costs).
+* **Signed-in user:** the only actor allowed to run an analysis (limits abuse and protects the limited free AI capacity).
 * **Visitor (not signed in):** can only reach the sign-up / sign-in pages in V1.
 
 ### Inputs
@@ -56,6 +56,14 @@ The system returns a structured analysis containing:
 ### Language
 * **V1 interface and analysis language: English.**
 * French and Arabic are candidates for a later version (Arabic requires right-to-left layout support).
+
+### Budget constraint
+**V1 must be 100 % free (budget: 0 €).** It must be built, tested and run without any paid service and without a payment card:
+
+* Only free and open-source tools are used (Python, FastAPI, MySQL Community, Git, GitHub, pytest, ruff).
+* The AI is reached through a **free tier** of a provider, or through a **local model**. Billing is never activated.
+* V1 runs **locally**: no paid hosting, no domain name, no public demo.
+* Free tiers have limits, can change without notice, and may allow the provider to use submitted images. The system therefore limits its own usage (per-user quota and global daily cap), shows a privacy notice before the first analysis, and keeps the AI behind an interface so the provider can be replaced (see [ADR-001](adr/001-ia.md)).
 
 ## 5. Core Principle: Managing Uncertainty
 ReverseCraftX follows a strict philosophical rule: **Distinguish between what is visible and what is inferred.**
@@ -88,6 +96,9 @@ To maintain a realistic execution scope, V1 deliberately excludes:
 ### Domains
 * Anything other than clothing (accessories, furniture, decorative items).
 
+### Paid services and public hosting
+* Any paid service (paid AI plan, paid hosting, domain name) and any public deployment or demo.
+
 ## 7. Success Criteria for V1
 V1 is considered successful when, on a **reference set of about 20 garment images** built by the author (varied garments, plus a few non-garment images):
 
@@ -98,13 +109,15 @@ V1 is considered successful when, on a **reference set of about 20 garment image
 | 3 | Analyses judged **useful** by the author (a beginner could use them to brief a tailor) | ≥ 80 % |
 | 4 | Non-garment or unreadable images end in `FAILED` with a clear message and a retry option | 100 % |
 | 5 | Inferences presented without a confidence level or evidence | 0 |
-| 6 | Cost per analysis | Below a ceiling to be fixed after ADR-001 |
+| 6 | Total cost of building, testing and running V1 | **0 €** (no paid service, no payment card required) |
+| 7 | AI usage stays within the provider's free limits | Global daily cap configured below the documented free daily limit |
 
 ## 8. Risks
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| **AI cost** per analysis grows with usage | Budget overrun | Authentication required, per-user quota, rate limiting, cache by image hash |
+| **Free-tier limits** of the AI provider (quota reached, reduced or withdrawn) | Analyses fail, or V1 cannot run at 0 € | Global daily cap below the free limit, per-user quota, no automatic retries, AI behind an interface, Plan B in ADR-001 (other free provider, small local model, replay of recorded results); billing is never activated |
+| **Free-tier data terms** (submitted images may be used by the provider to improve its products) | Privacy concern | Privacy notice accepted before the first analysis, test only with non-sensitive garment photos, no identifiable people, EXIF removed |
 | **Poor or hallucinated analyses** (materials and construction are hard to judge from a photo) | Loss of user trust | Strict observed / inferred separation, confidence levels, reference image set, output validation |
 | **Non-deterministic AI output** | Hard to test | Mock the AI client in unit tests, validate against a schema |
 | **Dependency on an external AI provider** (latency, outages, price changes) | Failures, delays | Timeout handling, `FAILED` state with retry, AI client behind an interface |
@@ -113,8 +126,8 @@ V1 is considered successful when, on a **reference set of about 20 garment image
 | **Scope creep** toward a social platform | V1 never ships | "What V1 Will NOT Do" list is binding; new ideas go to the V1.1 backlog |
 
 ## 9. Roadmap (indicative)
-* **V1:** Authentication + image analysis + consult my analyses.
-* **V1.1:** Publish a design as an article, search, view article.
+* **V1:** Authentication + image analysis + consult my analyses (100 % free, runs locally).
+* **V1.1:** Publish a design as an article, search, view article; public demo only if a free hosting and AI option exists.
 * **V1.2:** Comments, saved articles, profile, reporting.
 * **V2+:** Other domains (accessories, furniture), additional languages.
 
