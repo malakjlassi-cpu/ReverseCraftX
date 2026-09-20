@@ -8,7 +8,7 @@ ReverseCraftX is a visual reverse-engineering assistant for physical designs. Up
 >
 > **V1 budget: 0 €.** V1 is built with free and open-source tools, uses only a free AI tier (or a local model), and runs locally. No payment card is needed.
 
-![ReverseCraftX preview (mockup)](docs/image/preview-placeholder.png.svg)
+![ReverseCraftX preview (mockup)](docs/image/preview-placeholder.svg.png)
 
 *Mockup of the V1 interface. Replace it with a real screenshot once the app runs.*
 
